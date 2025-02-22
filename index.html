@@ -17,6 +17,7 @@
             margin: 0;
             text-align: center;
             padding: 20px;
+            overflow: hidden; /* For confetti */
         }
         .container {
             background-color: white;
@@ -25,6 +26,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             max-width: 600px;
             width: 100%;
+            z-index: 10; /* Above confetti */
         }
         h1 {
             font-size: 3rem;
@@ -36,6 +38,35 @@
             font-weight: bold;
             margin: 20px 0;
             color: #e63946;
+        }
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        .time-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .time-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background-color: #f1faee;
+            color: #e63946;
+            border-radius: 8px;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .time-label {
+            font-size: 1rem;
+            color: #457b9d;
+            margin-top: 5px;
         }
         .yes {
             font-size: 8rem;
@@ -53,14 +84,45 @@
             margin-top: 20px;
             color: #457b9d;
         }
+        /* Confetti canvas will be positioned absolute and cover the whole screen */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
+    <canvas id="confetti-canvas"></canvas>
     <div class="container">
         <h1>Is Kelly back yet?</h1>
         <div id="countdown-container">
-            <div id="countdown" class="countdown"></div>
-            <div id="message" class="message">days until Kelly returns!</div>
+            <!-- Removed the redundant countdown display -->
+            <div id="detailed-countdown" class="countdown-timer">
+                <div class="time-block">
+                    <div id="days" class="time-value">0</div>
+                    <div class="time-label">Days</div>
+                </div>
+                <div class="time-block">
+                    <div id="hours" class="time-value">0</div>
+                    <div class="time-label">Hours</div>
+                </div>
+                <div class="time-block">
+                    <div id="minutes" class="time-value">0</div>
+                    <div class="time-label">Minutes</div>
+                </div>
+                <div class="time-block">
+                    <div id="seconds" class="time-value">0</div>
+                    <div class="time-label">Seconds</div>
+                </div>
+            </div>
+            <div id="message" class="message">until Kelly returns!</div>
+            <!-- Hidden test button (only visible in developer mode) -->
+            <button id="test-confetti" style="display: none; margin-top: 20px; padding: 10px 15px; background-color: #2a9d8f; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Test Confetti</button>
         </div>
         <div id="yes-container" style="display: none;">
             <div class="yes">YES!</div>
@@ -68,7 +130,118 @@
         </div>
     </div>
 
+    <!-- Inline confetti script instead of external dependency -->
     <script>
+        // Simplified confetti implementation
+        const confetti = (function() {
+            // Create a canvas for the confetti
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Resize canvas to match window
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            // Call resize on window resize
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // Confetti particle class
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * -canvas.height;
+                    this.size = Math.random() * 10 + 5;
+                    this.speed = Math.random() * 5 + 2;
+                    this.angle = Math.random() * 360;
+                    this.rotation = Math.random() * 360;
+                    this.rotationSpeed = Math.random() * 5 - 2.5;
+                    this.color = `hsl(${Math.random() * 360}, 80%, 65%)`;
+                }
+                
+                update() {
+                    this.y += this.speed;
+                    this.rotation += this.rotationSpeed;
+                    
+                    // Reset if it goes off screen
+                    if (this.y > canvas.height) {
+                        this.y = Math.random() * -100;
+                        this.x = Math.random() * canvas.width;
+                    }
+                }
+                
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation * Math.PI / 180);
+                    
+                    // Draw a rectangle
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                    
+                    ctx.restore();
+                }
+            }
+            
+            // Particle collection
+            const particles = [];
+            
+            // Animation
+            let animationId = null;
+            let startTime = null;
+            
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw all particles
+                particles.forEach(particle => {
+                    particle.update();
+                    particle.draw();
+                });
+                
+                // Continue animation or stop if duration exceeded
+                if (elapsed < 15000) { // 15 seconds
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    // Clear any remaining confetti
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            
+            // Public method to start confetti
+            function start(options) {
+                // Clear any existing animation
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                // Reset particles
+                particles.length = 0;
+                startTime = null;
+                
+                // Create particles
+                const count = options?.particleCount || 150;
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle());
+                }
+                
+                // Start animation
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            // Return public methods
+            return {
+                start
+            };
+        })();
+        
+        // Set up the countdown timer
         function updateCountdown() {
             const now = new Date();
             const targetDate = new Date(now.getFullYear(), 3, 16); // Month is 0-indexed, so 3 = April
@@ -79,20 +252,76 @@
             }
             
             const timeRemaining = targetDate - now;
-            const daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
             
-            // If it's April 16th, show "YES"
+            // Calculate days, hours, minutes, seconds
+            const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            
+            // If it's April 16th, show "YES" and confetti
             if (now.getMonth() === 3 && now.getDate() === 16) {
                 document.getElementById('countdown-container').style.display = 'none';
                 document.getElementById('yes-container').style.display = 'block';
+                
+                // Launch confetti celebration
+                startConfettiCelebration();
             } else {
-                document.getElementById('countdown').textContent = daysRemaining;
+                // Update the countdown display (removed redundant line)
+                document.getElementById('days').textContent = days;
+                document.getElementById('hours').textContent = hours;
+                document.getElementById('minutes').textContent = minutes;
+                document.getElementById('seconds').textContent = seconds;
             }
         }
         
-        // Update countdown immediately and then every hour
+        // Confetti celebration function
+        function startConfettiCelebration() {
+            confetti.start({
+                particleCount: 150
+            });
+        }
+        
+        // Check if it's April 16th on load and show confetti if needed
+        function checkIfReturnDay() {
+            const now = new Date();
+            if (now.getMonth() === 3 && now.getDate() === 16) {
+                startConfettiCelebration();
+            }
+        }
+        
+        // Update countdown immediately and then every second
         updateCountdown();
-        setInterval(updateCountdown, 3600000);
+        setInterval(updateCountdown, 1000);
+        
+        // Check for return day on load
+        window.addEventListener('load', checkIfReturnDay);
+        
+        // Secret developer mode (press K+E+L+L+Y in sequence)
+        const secretCode = ['k', 'e', 'l', 'l', 'y'];
+        let keyIndex = 0;
+        
+        document.addEventListener('keydown', function(e) {
+            // Check if the key pressed matches the next key in the sequence
+            if (e.key.toLowerCase() === secretCode[keyIndex]) {
+                keyIndex++;
+                
+                // If the entire sequence has been entered correctly
+                if (keyIndex === secretCode.length) {
+                    // Show test button
+                    document.getElementById('test-confetti').style.display = 'inline-block';
+                    keyIndex = 0; // Reset for next time
+                }
+            } else {
+                // Reset if wrong key pressed
+                keyIndex = 0;
+            }
+        });
+        
+        // Add test button functionality
+        document.getElementById('test-confetti').addEventListener('click', function() {
+            startConfettiCelebration();
+        });
     </script>
 </body>
 </html>
