@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Is Kelly Back Yet?</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 30px;
+            color: #1d3557;
+        }
+        .countdown {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #e63946;
+        }
+        .yes {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #2a9d8f;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .message {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: #457b9d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Is Kelly Back Yet?</h1>
+        <div id="countdown-container">
+            <div id="countdown" class="countdown"></div>
+            <div id="message" class="message">days until Kelly returns!</div>
+        </div>
+        <div id="yes-container" style="display: none;">
+            <div class="yes">YES!</div>
+            <div class="message">Kelly is back!</div>
+        </div>
+    </div>
+
+    <script>
+        function updateCountdown() {
+            const now = new Date();
+            const targetDate = new Date(now.getFullYear(), 3, 16); // Month is 0-indexed, so 3 = April
+            
+            // If the target date has already passed this year, set it for next year
+            if (now > targetDate) {
+                targetDate.setFullYear(now.getFullYear() + 1);
+            }
+            
+            const timeRemaining = targetDate - now;
+            const daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
+            
+            // If it's April 16th, show "YES"
+            if (now.getMonth() === 3 && now.getDate() === 16) {
+                document.getElementById('countdown-container').style.display = 'none';
+                document.getElementById('yes-container').style.display = 'block';
+            } else {
+                document.getElementById('countdown').textContent = daysRemaining;
+            }
+        }
+        
+        // Update countdown immediately and then every hour
+        updateCountdown();
+        setInterval(updateCountdown, 3600000);
+    </script>
+</body>
+</html>
