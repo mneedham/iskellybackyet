@@ -84,6 +84,18 @@
             margin-top: 20px;
             color: #457b9d;
         }
+        /* Kelly's image styles */
+        .kelly-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: appear 1s ease-in-out;
+        }
+        @keyframes appear {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
         /* Confetti canvas will be positioned absolute and cover the whole screen */
         canvas {
             position: absolute;
@@ -123,9 +135,11 @@
             <div id="message" class="message">until Kelly returns!</div>
             <!-- Hidden test button (only visible in developer mode) -->
             <button id="test-confetti" style="display: none; margin-top: 20px; padding: 10px 15px; background-color: #2a9d8f; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Test Confetti</button>
+            <button id="test-kelly" style="display: none; margin-top: 10px; padding: 10px 15px; background-color: #e63946; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Test Kelly's Back Mode</button>
         </div>
         <div id="yes-container" style="display: none;">
             <div class="yes">YES!</div>
+            <img id="kelly-image" class="kelly-image" src="public/kelly.png" alt="Kelly is back!" style="max-width: 100%; margin: 20px 0;">
             <div class="message">Kelly is back!</div>
         </div>
     </div>
@@ -241,15 +255,14 @@
             };
         })();
         
+        // Preload Kelly's image
+        const kellyImage = new Image();
+        kellyImage.src = "/public/kelly-back-image.jpg";
+        
         // Set up the countdown timer
         function updateCountdown() {
             const now = new Date();
-            const targetDate = new Date(now.getFullYear(), 3, 16); // Month is 0-indexed, so 3 = April
-            
-            // If the target date has already passed this year, set it for next year
-            if (now > targetDate) {
-                targetDate.setFullYear(now.getFullYear() + 1);
-            }
+            const targetDate = new Date(2025, 3, 16); // April 16th, 2025 (month is 0-indexed)
             
             const timeRemaining = targetDate - now;
             
@@ -267,12 +280,19 @@
                 // Launch confetti celebration
                 startConfettiCelebration();
             } else {
-                // Update the countdown display (removed redundant line)
+                // Update the countdown display
                 document.getElementById('days').textContent = days;
                 document.getElementById('hours').textContent = hours;
                 document.getElementById('minutes').textContent = minutes;
                 document.getElementById('seconds').textContent = seconds;
             }
+        }
+        
+        // Function to show Kelly is back
+        function showKellyIsBack() {
+            document.getElementById('countdown-container').style.display = 'none';
+            document.getElementById('yes-container').style.display = 'block';
+            startConfettiCelebration();
         }
         
         // Confetti celebration function
@@ -286,7 +306,7 @@
         function checkIfReturnDay() {
             const now = new Date();
             if (now.getMonth() === 3 && now.getDate() === 16) {
-                startConfettiCelebration();
+                showKellyIsBack();
             }
         }
         
@@ -308,8 +328,9 @@
                 
                 // If the entire sequence has been entered correctly
                 if (keyIndex === secretCode.length) {
-                    // Show test button
+                    // Show test buttons
                     document.getElementById('test-confetti').style.display = 'inline-block';
+                    document.getElementById('test-kelly').style.display = 'inline-block';
                     keyIndex = 0; // Reset for next time
                 }
             } else {
@@ -322,6 +343,17 @@
         document.getElementById('test-confetti').addEventListener('click', function() {
             startConfettiCelebration();
         });
+        
+        // Add Kelly's back test button functionality
+        document.getElementById('test-kelly').addEventListener('click', function() {
+            showKellyIsBack();
+        });
+        
+        // Dynamic image handling - if the image fails to load, fallback to text only
+        document.getElementById('kelly-image').onerror = function() {
+            this.style.display = 'none';
+            document.querySelector('.yes').style.fontSize = '10rem'; // Make the YES bigger if no image
+        };
     </script>
 </body>
 </html>
